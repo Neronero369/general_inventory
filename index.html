@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradiFoot | Analyse des Stocks & Valorisation</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f6fc',
+              100: '#e1eff9',
+              200: '#c2ddf3',
+              300: '#94c2ea',
+              400: '#5da2dd',
+              500: '#3076bb', // Primary Vibrant Brand Blue
+              600: '#255e9c',
+              700: '#1f4f8d', // Deeper Corporate Blue
+              800: '#1a4175',
+              900: '#15355e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- SheetJS (xlsx.full.min.js) via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- html5-qrcode via CDN for Camera Barcode Scanning -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <!-- FontAwesome via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css?v=10">
+</head>
+
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-row overflow-x-hidden">
+
+  <!-- ========================================================================= -->
+  <!-- 1. BARRE LATÉRALE GAUCHE (Thème Sombre - bg-slate-900)                    -->
+  <!-- ========================================================================= -->
+  <aside id="sidebarContainer"
+    class="fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 bg-slate-900 text-slate-200 border-r border-slate-800 flex flex-col flex-shrink-0 shadow-2xl md:shadow-none">
+
+    <!-- En-tête / Logo -->
+    <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="TradiFoot Logo" class="h-8 md:h-9 w-auto object-contain cursor-pointer">
+      </div>
+      <!-- Bouton Fermer (X) sur Mobile -->
+      <button id="closeSidebarBtn"
+        class="block md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700 transition-colors focus:outline-none"
+        title="Fermer le menu des dépôts" aria-label="Fermer le menu des dépôts">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Zone Défilable des Filtres (Dédié exclusivement aux Emplacements / Dépôts) -->
+    <div class="flex-1 flex flex-col px-4 sm:px-5 py-4 space-y-3.5 overflow-hidden">
+
+      <!-- Header Section: Title & Active Pill Counter -->
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-800/80 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs border border-indigo-500/20 shadow-xs">
+            <i class="fa-solid fa-warehouse"></i>
+          </div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Locations / Dépôts</span>
+        </div>
+        <span id="activeFiltersCountBadge"
+          class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/60">Aucun</span>
+      </div>
+
+      <!-- Note d'instruction -->
+      <p
+        class="text-[11px] text-indigo-300/80 flex items-center gap-1.5 bg-indigo-950/30 px-3 py-1.5 rounded-lg border border-indigo-900/30 flex-shrink-0">
+        <i class="fa-solid fa-circle-info text-indigo-400 text-xs flex-shrink-0"></i>
+        <span>Maintenez "Ctrl" pour multi-sélectionner.</span>
+      </p>
+
+      <!-- Card Unique Dédiée aux Emplacements (Dépôt/Magasin) -->
+      <div
+        class="bg-slate-800/60 rounded-xl p-3 border border-slate-700/60 shadow-sm hover:border-slate-600 transition-colors flex-1 flex flex-col min-h-0">
+        <label class="flex items-center justify-between mb-2 flex-shrink-0">
+          <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase flex items-center gap-1.5">
+            <i class="fa-solid fa-building text-indigo-400/90 text-xs w-3.5 text-center"></i>
+            <span id="label-depot">DEPOT / MAGASIN</span>
+            <span id="badge-count-depot"
+              class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">0</span>
+          </span>
+          <span class="text-[10px] text-slate-500 font-medium">Multi</span>
+        </label>
+        <div class="relative flex-1 min-h-[300px] md:min-h-[450px]">
+          <select id="filter-depot" multiple
+            class="w-full h-full min-h-[300px] md:min-h-[450px] bg-slate-900/80 text-slate-300 text-xs font-medium rounded-lg p-2 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none cursor-pointer custom-multiselect dark-scrollbar shadow-inner">
+            <option disabled class="text-slate-500 italic py-1">Chargez l'Excel pour voir les dépôts...</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bas de Barre Latérale / Statut Ingestion -->
+    <div class="p-4 border-t border-slate-800 bg-slate-950/60">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-xs font-medium text-slate-300">Prêt pour l'ingestion</span>
+        </div>
+        <span id="fileStatusBadge"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+          <i class="fa-regular fa-clock"></i> Aucun fichier
+        </span>
+      </div>
+      <p id="uploadedFileName" class="text-[11px] text-slate-400 mt-1 truncate">data inventory.xlsx (148k lignes)</p>
+    </div>
+
+  </aside>
+
+  <!-- Mobile Backdrop -->
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden md:hidden"></div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. ESPACE DE TRAVAIL PRINCIPAL                                            -->
+  <!-- ========================================================================= -->
+  <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+
+    <!-- BARRE DE NAVIGATION SUPÉRIEURE -->
+    <header class="bg-slate-900 border-b border-slate-800 border-t-[3px] border-t-[#3076bb] sticky top-0 z-30 shadow-md shadow-[#1f4f8d]/15 px-3 sm:px-6 py-2.5 sm:py-3 brand-navbar">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-4">
+
+        <!-- Gauche: Hamburger Mobile & Recherche SKU -->
+        <div class="flex items-center gap-2.5 sm:gap-3 w-full md:w-auto flex-1 max-w-2xl">
+          <!-- Hamburger Button: visible only on mobile (block md:hidden) -->
+          <button id="mobileSidebarToggle"
+            class="block md:hidden h-11 w-11 flex-shrink-0 inline-flex items-center justify-center rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 active:bg-slate-600 transition-colors border border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#3076bb]"
+            title="Afficher les filtres" aria-label="Afficher les filtres">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+
+          <!-- Barre de Recherche SKU (code_article) ou Barcode (UPC) - Pleine largeur sur mobile -->
+          <div class="relative flex-1 w-full">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-magnifying-glass text-base"></i>
+            </div>
+            <input type="text" id="skuSearchInput" placeholder="Recherche par Code Article ou UPC..."
+              class="w-full h-11 md:h-12 bg-slate-800/90 hover:bg-slate-800 focus:bg-slate-950 text-slate-100 placeholder-slate-400 text-sm font-medium rounded-xl pl-10 pr-28 border border-slate-700 focus:border-[#3076bb] focus:ring-2 focus:ring-[#3076bb]/30 outline-none transition-all shadow-xs">
+            <div class="absolute inset-y-0 right-0 pr-2 flex items-center gap-1.5">
+              <button id="clearSkuBtn" type="button"
+                class="hidden text-slate-400 hover:text-slate-200 p-1.5 rounded-md transition-colors"
+                title="Effacer la recherche">
+                <i class="fa-solid fa-circle-xmark text-sm"></i>
+              </button>
+              <!-- Bouton Scanner Caméra Code-Barres / UPC -->
+              <button id="scanBarcodeBtn" type="button"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-[#3076bb] to-[#1f4f8d] hover:from-[#3884cf] hover:to-[#173d6e] active:scale-95 transition-all shadow-sm border border-[#3076bb]/40 cursor-pointer select-none"
+                title="Scanner un Code-Barres / UPC" aria-label="Scanner un code-barres">
+                <i class="fa-solid fa-barcode text-sm"></i>
+                <span class="hidden sm:inline text-[11px]">Scan</span>
+              </button>
+              <kbd
+                class="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 bg-slate-800 border border-slate-700 rounded">
+                Ctrl K
+              </kbd>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Droite: Bouton d'Upload Excel - Pleine largeur sur mobile, inline sur desktop -->
+        <div class="flex items-center gap-3 w-full md:w-auto">
+
+          <!-- Input Fichier Natif Masqué -->
+          <input type="file" id="excelUpload" accept=".xlsx, .xls" class="hidden">
+
+          <!-- Bouton Personnalisé d'Upload Excel -->
+          <div id="uploadDropZone" class="w-full md:w-auto inline-flex rounded-xl transition-all">
+            <label for="excelUpload"
+              class="cursor-pointer w-full md:w-auto h-11 md:h-12 justify-center inline-flex items-center gap-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-sm shadow-emerald-600/20 transition-all select-none">
+              <i class="fa-solid fa-file-excel text-base sm:text-lg"></i>
+              <span id="uploadButtonText" class="truncate">Charger l'Excel d'Inventaire</span>
+            </label>
+          </div>
+
+        </div>
+
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT AREA (Light gray background) -->
+    <main class="flex-1 bg-slate-100/70 p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+
+
+      <!-- Barre des Filtres Actifs (Suppression rapide) -->
+      <div id="activeFilterPillsContainer"
+        class="hidden bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1.5">
+          <i class="fa-solid fa-filter text-indigo-500"></i> Filtres Actifs :
+        </span>
+        <div id="activeFilterPillsList" class="flex flex-wrap items-center gap-1.5">
+          <!-- Badges injectés dynamiquement -->
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- 2. FILTRES DIMENSIONNELS & BARRE UTILITAIRE                          -->
+      <!-- ===================================================================== -->
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-sliders text-indigo-500 text-xs"></i>
+            Quick Filters
+          </span>
+        </div>
+        <button id="resetFiltersBtn"
+          class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#1f4f8d] bg-[#f0f6fc] border border-[#c2ddf3] shadow-sm hover:bg-[#e1eff9] hover:border-[#3076bb] transition-all duration-150 active:scale-95 cursor-pointer"
+          title="Réinitialiser tous les filtres">
+          <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+          <span>Reset All Filters</span>
+        </button>
+      </div>
+
+      <!-- Grille 2x2 sur Mobile, 4 colonnes sur Desktop -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 sm:mb-6">
+
+        <!-- Card: Marque -->
+        <div
+          class="bg-white dark:bg-slate-800/80 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors min-w-0">
+          <label class="flex items-center justify-between mb-1.5 flex-shrink-0">
+            <span
+              class="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5 truncate mr-1">
+              <i class="fa-solid fa-tag text-blue-500 text-xs w-3.5 text-center flex-shrink-0"></i>
+              <span id="label-marque" class="truncate">MARQUE</span>
+              <span id="badge-count-marque"
+                class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">0</span>
+            </span>
+            <span class="text-[9px] sm:text-[10px] text-slate-400 font-medium flex-shrink-0">Multi</span>
+          </label>
+          <div class="relative">
+            <select id="filterMarque" multiple
+              class="w-full h-28 sm:h-32 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 p-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer custom-multiselect">
+              <option disabled class="text-slate-400 italic py-1">Chargez l'Excel pour voir les marques...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Card: Genre -->
+        <div
+          class="bg-white dark:bg-slate-800/80 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors min-w-0">
+          <label class="flex items-center justify-between mb-1.5 flex-shrink-0">
+            <span
+              class="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5 truncate mr-1">
+              <i class="fa-solid fa-venus-mars text-indigo-500 text-xs w-3.5 text-center flex-shrink-0"></i>
+              <span id="label-genre" class="truncate">GENRE</span>
+              <span id="badge-count-genre"
+                class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">0</span>
+            </span>
+            <span class="text-[9px] sm:text-[10px] text-slate-400 font-medium flex-shrink-0">Multi</span>
+          </label>
+          <div class="relative">
+            <select id="filterGenre" multiple
+              class="w-full h-28 sm:h-32 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 p-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer custom-multiselect">
+              <option disabled class="text-slate-400 italic py-1">Chargez l'Excel pour voir les genres...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Card: Famille -->
+        <div
+          class="bg-white dark:bg-slate-800/80 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors min-w-0">
+          <label class="flex items-center justify-between mb-1.5 flex-shrink-0">
+            <span
+              class="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5 truncate mr-1">
+              <i class="fa-solid fa-layer-group text-violet-500 text-xs w-3.5 text-center flex-shrink-0"></i>
+              <span id="label-famille" class="truncate">FAMILLE</span>
+              <span id="badge-count-famille"
+                class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">0</span>
+            </span>
+            <span class="text-[9px] sm:text-[10px] text-slate-400 font-medium flex-shrink-0">Multi</span>
+          </label>
+          <div class="relative">
+            <select id="filterFamille" multiple
+              class="w-full h-28 sm:h-32 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 p-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer custom-multiselect">
+              <option disabled class="text-slate-400 italic py-1">Chargez l'Excel pour voir les familles...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Card: Taille -->
+        <div
+          class="bg-white dark:bg-slate-800/80 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors min-w-0">
+          <label class="flex items-center justify-between mb-1.5 flex-shrink-0">
+            <span
+              class="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5 truncate mr-1">
+              <i class="fa-solid fa-ruler-combined text-teal-500 text-xs w-3.5 text-center flex-shrink-0"></i>
+              <span id="label-taille" class="truncate">TAILLE</span>
+              <span id="badge-count-taille"
+                class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">0</span>
+            </span>
+            <span class="text-[9px] sm:text-[10px] text-slate-400 font-medium flex-shrink-0">Multi</span>
+          </label>
+          <div class="relative">
+            <select id="filterTaille" multiple
+              class="w-full h-28 sm:h-32 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 p-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer custom-multiselect">
+              <option disabled class="text-slate-400 italic py-1">Chargez l'Excel pour voir les tailles...</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- 3. RANGÉE SUPÉRIEURE DE 4 CARTES KPI (Thème Clair & Ombre Délicate)  -->
+      <!-- ===================================================================== -->
+      <!-- Grille KPI 2x2 sur Mobile, 4 colonnes sur Desktop -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 sm:mb-6">
+
+        <!-- KPI 1: Quantité Totale -->
+        <div id="card-total-qty"
+          class="kpi-card bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200/80 border-t-4 border-slate-300 shadow-xs hover:shadow-md transition-all min-w-0 overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 truncate mr-1">Quantité Totale</span>
+            <div
+              class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
+              <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+          </div>
+          <div class="mt-2 sm:mt-3 min-w-0">
+            <h3 id="kpi-total-qty"
+              class="text-base sm:text-lg lg:text-xl font-bold tracking-tight break-words text-slate-900 kpi-value-text">--</h3>
+            <div class="flex items-center justify-between mt-1 sm:mt-1.5 flex-wrap gap-1">
+              <span class="text-[10px] sm:text-xs text-slate-500 font-medium truncate">Unités en Stock</span>
+              <span
+                class="text-[9px] sm:text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0">Tous les Dépôts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Valeur Vente (TTC) -->
+        <div id="card-retail-value"
+          class="kpi-card bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200/80 border-t-4 border-slate-300 shadow-xs hover:shadow-md transition-all min-w-0 overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 truncate mr-1">Valeur Vente (TTC)</span>
+            <div
+              class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
+              <i class="fa-solid fa-sack-dollar"></i>
+            </div>
+          </div>
+          <div class="mt-2 sm:mt-3 min-w-0">
+            <h3 id="kpi-retail-value"
+              class="text-base sm:text-lg lg:text-xl font-bold tracking-tight break-words text-slate-900 kpi-value-text">-- DZD</h3>
+            <div class="flex items-center justify-between mt-1 sm:mt-1.5 flex-wrap gap-1">
+              <span class="text-[10px] sm:text-xs text-slate-500 font-medium truncate">Plein Tarif TTC</span>
+              <span
+                class="text-[9px] sm:text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0">Full price</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Valeur Achat (HT) -->
+        <div id="card-cost-value"
+          class="kpi-card bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200/80 border-t-4 border-slate-300 shadow-xs hover:shadow-md transition-all min-w-0 overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 truncate mr-1">Valeur Achat (HT)</span>
+            <div
+              class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
+              <i class="fa-solid fa-receipt"></i>
+            </div>
+          </div>
+          <div class="mt-2 sm:mt-3 min-w-0">
+            <h3 id="kpi-cost-value"
+              class="text-base sm:text-lg lg:text-xl font-bold tracking-tight break-words text-slate-900 kpi-value-text">-- DZD</h3>
+            <div class="flex items-center justify-between mt-1 sm:mt-1.5 flex-wrap gap-1">
+              <span class="text-[10px] sm:text-xs text-slate-500 font-medium truncate">Coût Global</span>
+              <span
+                class="text-[9px] sm:text-[11px] font-semibold text-amber-600 bg-amber-50 px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0">Prix d'Achat</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 4: Emplacements Actifs -->
+        <div id="card-locations"
+          class="kpi-card bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-slate-200/80 border-t-4 border-slate-300 shadow-xs hover:shadow-md transition-all min-w-0 overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 truncate mr-1">Emplacements</span>
+            <div
+              class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xs sm:text-lg flex-shrink-0">
+              <i class="fa-solid fa-warehouse"></i>
+            </div>
+          </div>
+          <div class="mt-2 sm:mt-3 min-w-0">
+            <h3 id="kpi-locations"
+              class="text-base sm:text-lg lg:text-xl font-bold tracking-tight break-words text-slate-900 kpi-value-text">--</h3>
+            <div class="flex items-center justify-between mt-1 sm:mt-1.5 flex-wrap gap-1">
+              <span class="text-[10px] sm:text-xs text-slate-500 font-medium truncate">Magasins/Dépôts</span>
+              <span
+                class="text-[9px] sm:text-[11px] font-semibold text-sky-600 bg-sky-50 px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0">Stock > 0</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- 4. VISUALISATIONS & TABLEAU DE DONNÉES                                -->
+      <!-- ===================================================================== -->
+
+      <!-- Section A: Graphique Barres Chart.js (Répartition des Stocks par Emplacement) -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6">
+        <div class="flex items-center justify-between pb-3 sm:pb-4 mb-3 sm:mb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm sm:text-base flex-shrink-0">
+              <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">Répartition par Emplacement</h3>
+              <p class="text-[11px] sm:text-xs text-slate-500">Quantités cumulées en stock (qty) par dépôt</p>
+            </div>
+          </div>
+          <span id="chartDepotsCountBadge"
+            class="text-[11px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex-shrink-0">
+            0 Emplacements
+          </span>
+        </div>
+        <!-- Dedicated responsive container with fixed height on mobile (h-64) and desktop (md:h-96) -->
+        <div class="relative h-64 md:h-96 w-full">
+          <canvas id="inventoryChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Section B: Tableau de Données Filtrées (avec Limitation aux 200 Premiers) -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 sm:pb-4 mb-3 sm:mb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm sm:text-base flex-shrink-0">
+              <i class="fa-solid fa-table-list"></i>
+            </div>
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">Lignes d'Inventaire Filtrées</h3>
+              <p id="tableSubtitleNote" class="text-[11px] sm:text-xs text-slate-500">Détail des stocks par référence produit</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div id="tableRecordCountBadge" class="text-xs font-medium text-slate-500">
+              <!-- Note dynamique injectée par uiRenderer.js -->
+            </div>
+            <button id="btn-export-excel"
+              class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-[#3076bb] to-[#1f4f8d] border border-[#1f4f8d] shadow-sm hover:from-[#3884cf] hover:to-[#173d6e] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none"
+              title="Chargez un fichier Excel pour activer l'export" disabled>
+              <i class="fa-solid fa-file-excel text-sm text-white"></i>
+              <span>Exporter en Excel (.xlsx)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Subtle mobile-only hint above the table -->
+        <p class="text-[10px] text-slate-400 md:hidden animate-pulse mb-2">Swipe left to see more columns &rarr;</p>
+
+        <!-- Wrapper overflow-x-auto w-full around #tableContainer -->
+        <div class="overflow-x-auto w-full">
+          <div id="tableContainer" class="max-h-[500px] overflow-y-auto border border-slate-200 rounded-xl min-w-full">
+            <div class="p-10 text-center text-slate-400">
+              <i class="fa-solid fa-table text-3xl mb-2 text-slate-300"></i>
+              <p class="text-sm font-medium">Chargez un fichier Excel pour afficher les données d'inventaire.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL SCANNER CODE-BARRES / UPC (Camera Viewfinder via html5-qrcode)      -->
+  <!-- ========================================================================= -->
+  <div id="scannerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-3 sm:p-6 transition-all duration-300">
+    <!-- Modal Card Container -->
+    <div class="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-[#3076bb]/20 text-[#3076bb] border border-[#3076bb]/30 flex items-center justify-center text-sm shadow-xs">
+            <i class="fa-solid fa-barcode"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white tracking-tight">Scanner Code-Barres / UPC</h3>
+            <p class="text-[11px] text-slate-400">Pointez la caméra vers le code-barres de l'article</p>
+          </div>
+        </div>
+        <!-- Close (X) Button -->
+        <button id="closeScannerBtn" type="button"
+          class="h-9 w-9 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700 transition-colors flex items-center justify-center focus:outline-none cursor-pointer"
+          title="Fermer le scanner" aria-label="Fermer le scanner">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Viewfinder Body -->
+      <div class="p-4 flex flex-col items-center justify-center bg-slate-950/40">
+        <!-- Status / Error message container -->
+        <div id="scannerStatusMsg" class="hidden w-full mb-3 p-3 rounded-xl text-xs font-medium text-rose-300 bg-rose-950/40 border border-rose-900/60 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400 flex-shrink-0"></i>
+          <span id="scannerStatusText" class="flex-1"></span>
+        </div>
+
+        <!-- Target Container for html5-qrcode -->
+        <div class="relative w-full rounded-xl overflow-hidden border border-slate-800 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[300px]">
+          <div id="reader" style="width: 100%;"></div>
+        </div>
+
+        <p class="text-[11px] text-slate-400 mt-3 text-center flex items-center gap-1.5">
+          <i class="fa-solid fa-lightbulb text-amber-400/90 text-xs"></i>
+          <span>Maintenez le code-barres horizontalement et bien éclairé.</span>
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between">
+        <span class="text-[11px] text-slate-500 font-mono">Caméra: Arrière (Environment)</span>
+        <button id="cancelScannerBtn" type="button"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 transition-colors border border-slate-700 cursor-pointer">
+          Fermer
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/dataService.js?v=12"></script>
+  <script src="js/state.js?v=12"></script>
+  <script src="js/filterEngine.js?v=12"></script>
+  <script src="js/kpiEngine.js?v=12"></script>
+  <script src="js/uiRenderer.js?v=12"></script>
+  <script src="js/scanner.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
+</body>
+
+</html>

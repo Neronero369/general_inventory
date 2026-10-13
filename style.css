@@ -1,0 +1,268 @@
+/* Custom Styles and Micro-Interactions for Enterprise Inventory Dashboard */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* Subtle glow & shadow accents */
+.glow-indigo {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.35);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35);
+}
+
+/* Glassmorphism accents */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Smooth Transitions */
+.transition-smooth {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Pulse animation for parsing status */
+@keyframes softPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+.animate-soft-pulse {
+  animation: softPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mono Code Badges */
+.font-mono-code {
+  font-family: var(--font-mono);
+}
+
+/* KPI Value Text Auto-Fit / Wrapping Protection */
+.kpi-value-text {
+  max-width: 100%;
+  display: block;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Custom Multi-Select List Styling & Custom Thin Scrollbars */
+select[multiple] {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 rgba(15, 23, 42, 0.4);
+}
+
+select[multiple]::-webkit-scrollbar {
+  width: 5px;
+}
+
+select[multiple]::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+
+select[multiple]::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+select[multiple]::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+select[multiple] option {
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+select[multiple] option:checked {
+  background: linear-gradient(135deg, #3076bb, #1f4f8d) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* KPI Card Dynamic Brand Border Flourish */
+.kpi-card {
+  border-top-width: 4px !important;
+  border-top-color: #cbd5e1;
+  transition: border-top-color 0.3s ease, box-shadow 0.2s ease;
+}
+
+/* Upgraded Reset All Filters Button - Branded Corporate Palette */
+#resetFiltersBtn {
+  color: #1f4f8d !important;
+  background-color: #f0f6fc !important;
+  border-color: #c2ddf3 !important;
+  box-shadow: 0 1px 2px 0 rgba(31, 79, 141, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#resetFiltersBtn:hover {
+  background-color: #e1eff9 !important;
+  border-color: #3076bb !important;
+  color: #15355e !important;
+  box-shadow: 0 2px 8px -1px rgba(48, 118, 187, 0.25);
+}
+
+#resetFiltersBtn:active {
+  transform: scale(0.96);
+}
+
+#resetFiltersBtn i {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#resetFiltersBtn:hover i {
+  transform: rotate(-180deg);
+}
+
+/* Export to Excel Button - Branded Corporate Gradient */
+#btn-export-excel {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #3076bb, #1f4f8d) !important;
+  border: 1px solid #1f4f8d !important;
+  box-shadow: 0 2px 6px 0 rgba(48, 118, 187, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#btn-export-excel:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3884cf, #173d6e) !important;
+  border-color: #173d6e !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(48, 118, 187, 0.35);
+}
+
+#btn-export-excel:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+#btn-export-excel i {
+  transition: transform 0.2s ease;
+}
+
+#btn-export-excel:hover:not(:disabled) i {
+  transform: scale(1.15);
+}
+
+/* Brand Navbar Top Visual Anchor */
+.brand-navbar {
+  border-top: 3px solid #3076bb !important;
+  box-shadow: 0 4px 20px -2px rgba(31, 79, 141, 0.15) !important;
+}
+
+/* ========================================================================= */
+/* Mobile Responsiveness & Touch Ergonomics                                  */
+/* ========================================================================= */
+
+/* Ensure table cells never wrap to allow smooth horizontal swipe on mobile */
+#tableContainer table th,
+#tableContainer table td {
+  white-space: nowrap;
+}
+
+/* Smooth horizontal scroll behavior for tables */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch-friendly multi-select options for thumb interaction */
+select[multiple] option {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile drawer off-canvas enhancements */
+#sidebarContainer {
+  will-change: transform;
+}
+
+/* Prevent unwanted mobile text zoom on input focus */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ========================================================================= */
+/* Camera Barcode / UPC Scanner Viewfinder Polish (html5-qrcode)             */
+/* ========================================================================= */
+
+#reader {
+  border: none !important;
+  background: #000000;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+#reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0.75rem;
+}
+
+#reader img[alt="Info icon"],
+#reader__dashboard_section,
+#reader__header_message {
+  display: none !important;
+}
+
+#reader__scan_region {
+  border-radius: 0.75rem;
+}
+
+#reader__scan_region video {
+  border-radius: 0.75rem;
+}
+
